@@ -1,0 +1,54 @@
+{% extends "staff/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Services{% endblock %}
+{% block page_title %}Services{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">Services</h2>
+</div>
+
+<section class="panel">
+  {% if services %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Availability</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in services %}
+        <tr>
+          <td><strong>{{ s.service_name }}</strong></td>
+          <td>{{ s.category_name }}</td>
+          <td class="mono">₱{{ '{:,.2f}'.format(s.price) }}</td>
+          <td>
+            {% if s.is_available %}
+              <span class="badge badge-available">Available</span>
+            {% else %}
+              <span class="badge badge-unavailable">Unavailable</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('staff_toggle_service', service_id=s.service_id) }}">
+              <button type="submit" class="btn btn-small">
+                {% if s.is_available %}Mark unavailable{% else %}Mark available{% endif %}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="panel-empty">No services have been added yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

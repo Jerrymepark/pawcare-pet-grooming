@@ -1,0 +1,110 @@
+{% extends layout %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Appointments{% endblock %}
+{% block page_icon %}{{ icon('calendar', 16) }}{% endblock %}
+{% block page_title %}Appointments{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">All Appointments</h2>
+</div>
+
+<section class="panel">
+  {% if appointments %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Customer</th>
+          <th>Pet</th>
+          <th>Service</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Payment</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in appointments %}
+        <tr>
+          <td class="mono">{{ a.date_text }}</td>
+          <td class="mono">{{ a.time_text }}</td>
+          <td>
+            <strong>{{ a.customer_name }}</strong>
+            <div class="pay-meta">{{ a.contact_number }}</div>
+          </td>
+          <td>{{ a.pet_name }}</td>
+          <td>{{ a.service_name }}</td>
+          <td class="mono">{% if a.amount is not none %}₱{{ '{:,.2f}'.format(a.amount) }}{% else %}—{% endif %}</td>
+          <td><span class="badge badge-{{ a.status|lower|replace(' ', '-') }}">{{ a.status }}</span></td>
+          <td>
+            {% if a.payment_status %}
+              <span class="badge badge-{{ a.payment_status|lower }}">{{ a.payment_status }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if a.next_statuses %}
+            <button type="button" class="btn btn-small js-status"
+                    data-action="{{ url_for(status_endpoint, appointment_id=a.appointment_id) }}"
+                    data-options="{{ a.next_statuses|join(',') }}"
+                    data-summary="{{ a.customer_name }} — {{ a.pet_name }}, {{ a.service_name }}">Update</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="panel-empty">No appointments yet.</p>
+  {% endif %}
+</section>
+
+<dialog id="status-dialog" class="modal">
+  <form method="POST" id="status-form">
+    <h3>Update status</h3>
+    <p id="status-text"></p>
+    <select name="status" id="status-select" class="input"></select>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Close</button>
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const statusDialog = document.getElementById('status-dialog');
+
+  document.querySelectorAll('.js-status').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.getElementById('status-form').action = button.dataset.action;
+      document.getElementById('status-text').textContent = button.dataset.summary;
+
+      const select = document.getElementById('status-select');
+      select.innerHTML = '';
+      button.dataset.options.split(',').forEach(function (name) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+      statusDialog.showModal();
+    });
+  });
+
+  document.querySelectorAll('.js-close').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.closest('dialog').close();
+    });
+  });
+
+  statusDialog.addEventListener('click', function (event) {
+    if (event.target === statusDialog) {
+      statusDialog.close();
+    }
+  });
+</script>
+{% endblock %}

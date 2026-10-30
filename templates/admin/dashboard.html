@@ -1,0 +1,120 @@
+{% extends "admin/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<h2 class="page-heading">Overview</h2>
+<section class="stats">
+  <div class="stat-card">
+    <div class="stat-head">
+      <div class="stat-label">Customers</div>
+      <div class="stat-icon">{{ icon('users', 16) }}</div>
+    </div>
+    <div class="stat-value">{{ stats.customers }}</div>
+    <div class="stat-sub">registered owners</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-head">
+      <div class="stat-label">Staff</div>
+      <div class="stat-icon">{{ icon('staff', 16) }}</div>
+    </div>
+    <div class="stat-value">{{ stats.staff }}</div>
+    <div class="stat-sub">registered staff</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-head">
+      <div class="stat-label">Pets</div>
+      <div class="stat-icon">{{ icon('paw', 16) }}</div>
+    </div>
+    <div class="stat-value">{{ stats.pets }}</div>
+    <div class="stat-sub">across all owners</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-head">
+      <div class="stat-label">Pending</div>
+      <div class="stat-icon">{{ icon('calendar', 16) }}</div>
+    </div>
+    <div class="stat-value">{{ stats.pending }}</div>
+    <div class="stat-sub">appointments</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-head">
+      <div class="stat-label">Revenue</div>
+      <div class="stat-icon">{{ icon('payment', 16) }}</div>
+    </div>
+    <div class="stat-value">₱{{ '{:,.2f}'.format(stats.revenue) }}</div>
+    <div class="stat-sub">paid this month</div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-body">
+    <h3>Quick Actions</h3>
+    <div class="actions">
+      <a class="action" href="{{ url_for('admin_appointments') }}">
+        <span class="action-icon">{{ icon('calendar', 19) }}</span>
+        <span class="action-text">
+          <span class="action-label">Appointments</span>
+          <span class="action-desc">Review and update status</span>
+        </span>
+      </a>
+      <a class="action" href="{{ url_for('admin_services') }}">
+        <span class="action-icon">{{ icon('list', 19) }}</span>
+        <span class="action-text">
+          <span class="action-label">Manage Services</span>
+          <span class="action-desc">Edit services and prices</span>
+        </span>
+      </a>
+      <a class="action" href="{{ url_for('admin_staff') }}">
+        <span class="action-icon">{{ icon('staff', 19) }}</span>
+        <span class="action-text">
+          <span class="action-label">Manage Staff</span>
+          <span class="action-desc">Add or edit staff accounts</span>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h3>Upcoming Appointments</h3>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Pet</th>
+          <th>Owner</th>
+          <th>Service</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in upcoming %}
+        <tr>
+          <td><strong>{{ a.pet_name }}</strong></td>
+          <td>{{ a.owner }}</td>
+          <td>{{ a.service_name }}</td>
+          <td class="mono">{{ a.date }}</td>
+          <td class="mono">{{ a.time }}</td>
+          <td><span class="badge badge-{{ a.status|lower|replace(' ', '-') }}">{{ a.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td class="empty" colspan="6">No upcoming appointments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}

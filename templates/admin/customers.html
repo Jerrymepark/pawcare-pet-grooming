@@ -1,0 +1,101 @@
+{% extends "admin/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Customers{% endblock %}
+{% block page_icon %}{{ icon('users', 16) }}{% endblock %}
+{% block page_title %}Customers{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">Customers</h2>
+</div>
+
+<section class="panel">
+  {% if customers %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Contact</th>
+          <th>Pets</th>
+          <th>Appointments</th>
+          <th>Joined</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td><strong>{{ c.full_name }}</strong></td>
+          <td>{{ c.email }}</td>
+          <td class="mono">{{ c.contact_number }}</td>
+          <td class="mono">{{ c.pet_count }}</td>
+          <td class="mono">{{ c.appointment_count }}</td>
+          <td class="mono">{{ c.joined }}</td>
+          <td>
+            <button type="button" class="btn btn-small js-edit"
+                    data-action="{{ url_for('admin_edit_customer', customer_id=c.customer_id) }}"
+                    data-name="{{ c.full_name }}"
+                    data-contact="{{ c.contact_number }}"
+                    data-email="{{ c.email }}">Edit</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="panel-empty">No customers have registered yet.</p>
+  {% endif %}
+</section>
+
+<dialog id="customer-dialog" class="modal">
+  <form method="POST" id="customer-form" autocomplete="off">
+    <h3>Edit customer</h3>
+    <p id="customer-email"></p>
+
+    <div class="field">
+      <label for="customer-name">Full name</label>
+      <input id="customer-name" type="text" name="full_name" maxlength="100" required>
+    </div>
+
+    <div class="field">
+      <label for="customer-contact">Contact number</label>
+      <input id="customer-contact" type="text" name="contact_number" maxlength="20" required>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Cancel</button>
+      <button type="submit" class="btn">Save Changes</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const customerDialog = document.getElementById('customer-dialog');
+
+  document.querySelectorAll('.js-edit').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.getElementById('customer-form').action = button.dataset.action;
+      document.getElementById('customer-email').textContent = 'Login email: ' + button.dataset.email;
+      document.getElementById('customer-name').value = button.dataset.name;
+      document.getElementById('customer-contact').value = button.dataset.contact;
+      customerDialog.showModal();
+    });
+  });
+
+  document.querySelectorAll('.js-close').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.closest('dialog').close();
+    });
+  });
+
+  customerDialog.addEventListener('click', function (event) {
+    if (event.target === customerDialog) {
+      customerDialog.close();
+    }
+  });
+</script>
+{% endblock %}

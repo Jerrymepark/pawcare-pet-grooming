@@ -1,0 +1,63 @@
+{% extends "staff/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Staff Dashboard{% endblock %}
+{% block page_icon %}{{ icon('home', 16) }}{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">Welcome, {{ session.full_name }}</h2>
+</div>
+
+<div class="staff-stats">
+  <div class="staff-stat">
+    <span class="staff-stat-label">Today's appointments</span>
+    <span class="staff-stat-value">{{ stats.today_count }}</span>
+  </div>
+  <div class="staff-stat">
+    <span class="staff-stat-label">Pending</span>
+    <span class="staff-stat-value">{{ stats.pending_count }}</span>
+  </div>
+  <div class="staff-stat">
+    <span class="staff-stat-label">In progress</span>
+    <span class="staff-stat-value">{{ stats.in_progress_count }}</span>
+  </div>
+  <div class="staff-stat">
+    <span class="staff-stat-label">Awaiting payment</span>
+    <span class="staff-stat-value">{{ stats.unpaid_count }}</span>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h3>Today's schedule</h3></div>
+  {% if schedule %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Customer</th>
+          <th>Pet</th>
+          <th>Service</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in schedule %}
+        <tr>
+          <td class="mono">{{ a.time_text }}</td>
+          <td><strong>{{ a.customer_name }}</strong></td>
+          <td>{{ a.pet_name }}</td>
+          <td>{{ a.service_name }}</td>
+          <td><span class="badge badge-{{ a.status|lower|replace(' ', '-') }}">{{ a.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="panel-empty">No appointments scheduled for today.</p>
+  {% endif %}
+</section>
+{% endblock %}

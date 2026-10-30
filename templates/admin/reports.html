@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Sales Report{% endblock %}
+{% block page_title %}Sales Report{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">Sales Report</h2>
+</div>
+
+<form method="GET" class="filter-bar">
+  <label>From <input type="date" name="start" value="{{ start }}" class="input" required></label>
+  <label>To <input type="date" name="end" value="{{ end }}" class="input" required></label>
+  <button type="submit" class="btn">Apply</button>
+</form>
+
+<div class="staff-stats">
+  <div class="staff-stat">
+    <span class="staff-stat-label">Total sales</span>
+    <span class="staff-stat-value">₱{{ '{:,.2f}'.format(totals.total) }}</span>
+  </div>
+  <div class="staff-stat">
+    <span class="staff-stat-label">Paid payments</span>
+    <span class="staff-stat-value">{{ totals.paid_count }}</span>
+  </div>
+  <div class="staff-stat">
+    <span class="staff-stat-label">Services available</span>
+    <span class="staff-stat-value">{{ availability.available }}</span>
+  </div>
+  <div class="staff-stat">
+    <span class="staff-stat-label">Services unavailable</span>
+    <span class="staff-stat-value">{{ availability.unavailable }}</span>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h3>Sales by service</h3></div>
+  {% if by_service %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Service</th><th>Times paid</th><th>Sales</th></tr>
+      </thead>
+      <tbody>
+        {% for row in by_service %}
+        <tr>
+          <td><strong>{{ row.service_name }}</strong></td>
+          <td class="mono">{{ row.times_paid }}</td>
+          <td class="mono">₱{{ '{:,.2f}'.format(row.revenue) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="panel-empty">No paid payments in this date range.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h3>Sales by payment method</h3></div>
+  {% if by_method %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Method</th><th>Payments</th><th>Sales</th></tr>
+      </thead>
+      <tbody>
+        {% for row in by_method %}
+        <tr>
+          <td><strong>{{ row.payment_method }}</strong></td>
+          <td class="mono">{{ row.payments }}</td>
+          <td class="mono">₱{{ '{:,.2f}'.format(row.revenue) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="panel-empty">No paid payments in this date range.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h3>Appointments by status (all time)</h3></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Status</th><th>Appointments</th></tr>
+      </thead>
+      <tbody>
+        {% for name, count in status_counts.items() %}
+        <tr>
+          <td><span class="badge badge-{{ name|lower|replace(' ', '-') }}">{{ name }}</span></td>
+          <td class="mono">{{ count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

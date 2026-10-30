@@ -1,0 +1,39 @@
+{% extends "customer/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Services & Pricing{% endblock %}
+{% block page_icon %}{{ icon('scissors', 16) }}{% endblock %}
+{% block page_title %}Services &amp; Pricing{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+  <h2 class="page-heading">Services &amp; Pricing</h2>
+  <p>Everything we offer for your pet, with current prices.</p>
+</div>
+
+{% if groups %}
+  {% for category, services in groups.items() %}
+  <section class="category-block">
+    <h3 class="category-title">{{ category }}</h3>
+    <div class="service-grid">
+      {% for s in services %}
+      <article class="service-card">
+        <div>
+          <div class="service-name">{{ s.service_name }}</div>
+          {% if s.description %}<div class="service-text">{{ s.description }}</div>{% endif %}
+        </div>
+        <div class="service-foot">
+          <span class="service-price">₱{{ '{:,.2f}'.format(s.price) }}</span>
+          <a class="btn btn-small" href="#">Book</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+{% else %}
+  <section class="empty-state">
+    <p>No services are available right now. Please check back soon.</p>
+  </section>
+{% endif %}
+{% endblock %}

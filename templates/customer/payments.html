@@ -1,0 +1,58 @@
+{% extends "customer/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Payment History{% endblock %}
+{% block page_icon %}{{ icon('payment', 16) }}{% endblock %}
+{% block page_title %}Payment History{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">Payment History</h2>
+</div>
+
+<div class="pay-summary">
+  <div class="pay-summary-card">
+    <span class="pay-summary-label">Total paid</span>
+    <span class="pay-summary-value">₱{{ '{:,.2f}'.format(total_paid) }}</span>
+  </div>
+  <div class="pay-summary-card">
+    <span class="pay-summary-label">Still to pay</span>
+    <span class="pay-summary-value">₱{{ '{:,.2f}'.format(still_to_pay) }}</span>
+  </div>
+</div>
+
+<section class="panel">
+  {% if payments %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Appointment</th>
+          <th>Pet</th>
+          <th>Service</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Method</th>
+          <th>Paid on</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payments %}
+        <tr>
+          <td class="mono">{{ pay.date_text }}</td>
+          <td><strong>{{ pay.pet_name }}</strong></td>
+          <td>{{ pay.service_name }}</td>
+          <td class="mono">₱{{ '{:,.2f}'.format(pay.amount) }}</td>
+          <td><span class="badge badge-{{ pay.payment_status|lower }}">{{ pay.payment_status }}</span></td>
+          <td>{{ pay.payment_method or '—' }}</td>
+          <td class="mono">{{ pay.paid_on or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="panel-empty">No payments yet. They appear here after you book an appointment.</p>
+  {% endif %}
+</section>
+{% endblock %}

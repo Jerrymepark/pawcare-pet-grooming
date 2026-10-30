@@ -1,0 +1,54 @@
+{% extends "customer/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Home{% endblock %}
+{% block page_title %}Home{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+  <div class="hero-paw">{{ icon('paw', 88) }}</div>
+  <h2>Welcome back, {{ first_name }}!</h2>
+  <p>PawCare is here for you and your pet.</p>
+  <div class="hero-actions">
+  <a class="btn-hero" href="{{ url_for('book_appointment') }}">Book Appointment</a>
+  <a class="btn-hero btn-hero-ghost" href="{{ url_for('my_appointments') }}">My Appointments</a>
+</div>
+</section>
+
+{% if next_appointment %}
+<section class="next-card">
+  <span class="next-icon">{{ icon('calendar', 22) }}</span>
+  <div class="next-body">
+    <div class="next-label">Next Appointment</div>
+    <div class="next-title">{{ next_appointment.service_name }} — {{ next_appointment.pet_name }}</div>
+    <div class="next-meta">{{ next_appointment.date }} at {{ next_appointment.time }}</div>
+  </div>
+  <span class="badge">{{ next_appointment.status }}</span>
+</section>
+{% endif %}
+
+<section class="quick-links">
+  <a class="quick-link" href="#">
+    <div class="quick-icon">{{ icon('scissors', 18) }}</div>
+    <div class="quick-label">Services &amp; Pricing</div>
+    <div class="quick-desc">See all treatments</div>
+  </a>
+  <a class="quick-link" href="#">
+    <div class="quick-icon">{{ icon('paw', 18) }}</div>
+    <div class="quick-label">My Pets</div>
+    <div class="quick-desc">{{ pet_count }} registered</div>
+  </a>
+  <a class="quick-link" href="#">
+    <div class="quick-icon">{{ icon('calendar', 18) }}</div>
+    <div class="quick-label">Book Appointment</div>
+    <div class="quick-desc">Schedule a visit</div>
+  </a>
+  <a class="quick-link" href="#">
+    <div class="quick-icon">{{ icon('clipboard', 18) }}</div>
+    <div class="quick-label">My Appointments</div>
+    <div class="quick-desc">{{ appointment_count }} records</div>
+  </a>
+</section>
+
+{% endblock %}

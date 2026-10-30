@@ -1,0 +1,139 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Categories{% endblock %}
+{% block page_title %}Categories{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">Categories</h2>
+  <button class="btn" type="button" id="open-add">+ Add Category</button>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h3>All categories</h3>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Services</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in categories %}
+        <tr>
+          <td><strong>{{ c.category_name }}</strong></td>
+          <td class="mono">{{ c.service_count }}</td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="btn btn-small btn-light js-edit"
+                      data-action="{{ url_for('edit_category', category_id=c.category_id) }}"
+                      data-name="{{ c.category_name }}">Edit</button>
+              <button type="button" class="btn btn-small btn-danger js-delete"
+                      data-action="{{ url_for('delete_category', category_id=c.category_id) }}"
+                      data-name="{{ c.category_name }}"
+                      data-count="{{ c.service_count }}">Delete</button>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="empty" colspan="3">No categories yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<dialog id="add-dialog" class="modal">
+  <form method="POST" action="{{ url_for('add_category') }}">
+    <h3>Add category</h3>
+    <label for="add-name">Category name</label>
+    <input id="add-name" type="text" name="category_name" maxlength="50" placeholder="e.g. Bath &amp; Cleaning" required>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Cancel</button>
+      <button type="submit" class="btn">Add Category</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="edit-dialog" class="modal">
+  <form method="POST" id="edit-form">
+    <h3>Edit category</h3>
+    <label for="edit-name">Category name</label>
+    <input id="edit-name" type="text" name="category_name" maxlength="50" required>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Cancel</button>
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="delete-dialog" class="modal">
+  <form method="POST" id="delete-form">
+    <h3>Delete category</h3>
+    <p id="delete-text"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Cancel</button>
+      <button type="submit" class="btn btn-danger" id="delete-confirm">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const addDialog = document.getElementById('add-dialog');
+  const editDialog = document.getElementById('edit-dialog');
+  const deleteDialog = document.getElementById('delete-dialog');
+
+  document.getElementById('open-add').addEventListener('click', function () {
+    document.getElementById('add-name').value = '';
+    addDialog.showModal();
+    document.getElementById('add-name').focus();
+  });
+
+  document.querySelectorAll('.js-edit').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.getElementById('edit-form').action = button.dataset.action;
+      document.getElementById('edit-name').value = button.dataset.name;
+      editDialog.showModal();
+      document.getElementById('edit-name').select();
+    });
+  });
+
+  document.querySelectorAll('.js-delete').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const count = parseInt(button.dataset.count, 10);
+      const text = document.getElementById('delete-text');
+      const confirmButton = document.getElementById('delete-confirm');
+
+      document.getElementById('delete-form').action = button.dataset.action;
+
+      if (count > 0) {
+        text.textContent = '"' + button.dataset.name + '" is used by ' + count +
+          ' service(s) and cannot be deleted. Move or delete those services first.';
+        confirmButton.style.display = 'none';
+      } else {
+        text.textContent = 'Delete "' + button.dataset.name + '"? This cannot be undone.';
+        confirmButton.style.display = '';
+      }
+      deleteDialog.showModal();
+    });
+  });
+
+  document.querySelectorAll('.js-close').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.closest('dialog').close();
+    });
+  });
+
+  document.querySelectorAll('dialog').forEach(function (dialog) {
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) {
+        dialog.close();
+      }
+    });
+  });
+</script>
+{% endblock %}

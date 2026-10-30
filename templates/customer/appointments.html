@@ -1,0 +1,114 @@
+{% extends "customer/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}My Appointments{% endblock %}
+{% block page_icon %}{{ icon('clipboard', 16) }}{% endblock %}
+{% block page_title %}My Appointments{% endblock %}
+
+{% block content %}
+
+{% macro appointments_table(rows) %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Pet</th>
+        <th>Service</th>
+        <th>Price</th>
+        <th>Status</th>
+        <th>Payment</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in rows %}
+      <tr>
+        <td class="mono">{{ a.date_text }}</td>
+        <td class="mono">{{ a.time_text }}</td>
+        <td><strong>{{ a.pet_name }}</strong></td>
+        <td>{{ a.service_name }}</td>
+        <td class="mono">{% if a.amount is not none %}₱{{ '{:,.2f}'.format(a.amount) }}{% else %}—{% endif %}</td>
+        <td><span class="badge badge-{{ a.status|lower|replace(' ', '-') }}">{{ a.status }}</span></td>
+        <td>
+          {% if a.payment_status %}
+            <span class="badge badge-{{ a.payment_status|lower }}">{{ a.payment_status }}</span>
+            {% if a.payment_status == 'Paid' and a.payment_method %}
+              <div class="pay-meta">{{ a.payment_method }} · {{ a.paid_on }}</div>
+            {% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if a.can_cancel %}
+          <button type="button" class="btn btn-small btn-danger js-cancel"
+                  data-action="{{ url_for('cancel_appointment', appointment_id=a.appointment_id) }}"
+                  data-summary="{{ a.pet_name }} — {{ a.service_name }}, {{ a.date_text }} at {{ a.time_text }}">Cancel</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+<div class="page-head">
+  <h2 class="page-heading">My Appointments</h2>
+  <a class="btn" href="{{ url_for('book_appointment') }}">+ Book Appointment</a>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h3>Upcoming</h3></div>
+  {% if upcoming %}
+    {{ appointments_table(upcoming) }}
+  {% else %}
+    <p class="panel-empty">No upcoming appointments. <a href="{{ url_for('book_appointment') }}">Book one</a></p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h3>Previous</h3></div>
+  {% if previous %}
+    {{ appointments_table(previous) }}
+  {% else %}
+    <p class="panel-empty">Your completed and cancelled appointments will appear here.</p>
+  {% endif %}
+</section>
+
+<dialog id="cancel-dialog" class="modal">
+  <form method="POST" id="cancel-form">
+    <h3>Cancel appointment</h3>
+    <p id="cancel-text"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Keep appointment</button>
+      <button type="submit" class="btn btn-danger">Cancel appointment</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const cancelDialog = document.getElementById('cancel-dialog');
+
+  document.querySelectorAll('.js-cancel').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.getElementById('cancel-form').action = button.dataset.action;
+      document.getElementById('cancel-text').textContent =
+        'Cancel ' + button.dataset.summary + '? The time slot will become available to others.';
+      cancelDialog.showModal();
+    });
+  });
+
+  document.querySelectorAll('.js-close').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.closest('dialog').close();
+    });
+  });
+
+  cancelDialog.addEventListener('click', function (event) {
+    if (event.target === cancelDialog) {
+      cancelDialog.close();
+    }
+  });
+</script>
+{% endblock %}

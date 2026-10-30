@@ -1,0 +1,108 @@
+{% extends layout %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Payments{% endblock %}
+{% block page_icon %}{{ icon('payment', 16) }}{% endblock %}
+{% block page_title %}Payments{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">Payments</h2>
+</div>
+
+<section class="panel">
+  {% if payments %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Appointment</th>
+          <th>Customer</th>
+          <th>Pet</th>
+          <th>Service</th>
+          <th>Amount</th>
+          <th>Payment</th>
+          <th>Method</th>
+          <th>Paid on</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payments %}
+        <tr>
+          <td>
+            <span class="mono">{{ pay.date_text }}</span>
+            <div class="pay-meta">{{ pay.appointment_status }}</div>
+          </td>
+          <td><strong>{{ pay.customer_name }}</strong></td>
+          <td>{{ pay.pet_name }}</td>
+          <td>{{ pay.service_name }}</td>
+          <td class="mono">₱{{ '{:,.2f}'.format(pay.amount) }}</td>
+          <td><span class="badge badge-{{ pay.payment_status|lower }}">{{ pay.payment_status }}</span></td>
+          <td>{{ pay.payment_method or '—' }}</td>
+          <td class="mono">
+            {{ pay.paid_on or '—' }}
+            {% if pay.processed_by_name %}<div class="pay-meta">by {{ pay.processed_by_name }}</div>{% endif %}
+          </td>
+          <td>
+            {% if pay.can_record %}
+            <button type="button" class="btn btn-small js-record"
+                    data-action="{{ url_for(record_endpoint, payment_id=pay.payment_id) }}"
+                    data-summary="{{ pay.customer_name }} — {{ pay.pet_name }}, {{ pay.service_name }}"
+                    data-amount="₱{{ '{:,.2f}'.format(pay.amount) }}">Record payment</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="panel-empty">No payments yet.</p>
+  {% endif %}
+</section>
+
+<dialog id="record-dialog" class="modal">
+  <form method="POST" id="record-form">
+    <h3>Record payment</h3>
+    <p id="record-text"></p>
+    <p><strong id="record-amount"></strong></p>
+    <select name="payment_method" class="input" required>
+      <option value="" disabled selected>Choose a payment method</option>
+      {% for m in methods %}
+      <option value="{{ m }}">{{ m }}</option>
+      {% endfor %}
+    </select>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Close</button>
+      <button type="submit" class="btn">Mark as Paid</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const recordDialog = document.getElementById('record-dialog');
+
+  document.querySelectorAll('.js-record').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.getElementById('record-form').action = button.dataset.action;
+      document.getElementById('record-text').textContent = button.dataset.summary;
+      document.getElementById('record-amount').textContent = 'Amount due: ' + button.dataset.amount;
+      recordDialog.querySelector('select').selectedIndex = 0;
+      recordDialog.showModal();
+    });
+  });
+
+  document.querySelectorAll('.js-close').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.closest('dialog').close();
+    });
+  });
+
+  recordDialog.addEventListener('click', function (event) {
+    if (event.target === recordDialog) {
+      recordDialog.close();
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "customer/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}My Pets{% endblock %}
+{% block page_icon %}{{ icon('paw', 16) }}{% endblock %}
+{% block page_title %}My Pets{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">My Pets</h2>
+  <button class="btn js-add" type="button">+ Add Pet</button>
+</div>
+
+{% if pets %}
+<section class="pet-grid">
+  {% for p in pets %}
+  <article class="pet-card">
+    <div class="pet-top">
+      <span class="pet-icon">{{ icon('paw', 22) }}</span>
+      <div>
+        <div class="pet-name">{{ p.pet_name }}</div>
+        <div class="pet-meta">
+          {{ p.species }} · {{ p.gender }}{% if p.age is not none %} · {{ p.age }} yr{{ '' if p.age == 1 else 's' }}{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button type="button" class="btn btn-small btn-light js-edit"
+              data-action="{{ url_for('edit_pet', pet_id=p.pet_id) }}"
+              data-name="{{ p.pet_name }}"
+              data-species="{{ p.species }}"
+              data-gender="{{ p.gender }}"
+              data-age="{{ p.age if p.age is not none else '' }}">Edit</button>
+      <button type="button" class="btn btn-small btn-danger js-delete"
+              data-action="{{ url_for('delete_pet', pet_id=p.pet_id) }}"
+              data-name="{{ p.pet_name }}"
+              data-count="{{ p.appointment_count }}">Delete</button>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% else %}
+<section class="empty-state">
+  <p>You haven't added a pet yet.</p>
+  <button class="btn js-add" type="button">+ Add your first pet</button>
+</section>
+{% endif %}
+
+<dialog id="pet-dialog" class="modal">
+  <form method="POST" id="pet-form" autocomplete="off">
+    <h3 id="pet-title">Add pet</h3>
+
+    <div class="field">
+      <label for="pet-name">Pet name</label>
+      <input id="pet-name" type="text" name="pet_name" maxlength="50" required>
+    </div>
+
+    <div class="field">
+      <label for="pet-species">Species</label>
+      <input id="pet-species" type="text" name="species" list="species-list" maxlength="30" placeholder="e.g. Dog" required>
+      <datalist id="species-list">
+        <option value="Dog">
+        <option value="Cat">
+        <option value="Rabbit">
+        <option value="Bird">
+        <option value="Hamster">
+      </datalist>
+    </div>
+
+    <div class="field">
+      <label for="pet-gender">Gender</label>
+      <select id="pet-gender" name="gender" required>
+        <option value="">Select gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="pet-age">Age in years (optional)</label>
+      <input id="pet-age" type="number" name="age" min="0" max="50" step="1">
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Cancel</button>
+      <button type="submit" class="btn" id="pet-submit">Add Pet</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="delete-dialog" class="modal">
+  <form method="POST" id="delete-form">
+    <h3>Delete pet</h3>
+    <p id="delete-text"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Cancel</button>
+      <button type="submit" class="btn btn-danger" id="delete-confirm">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const petDialog = document.getElementById('pet-dialog');
+  const deleteDialog = document.getElementById('delete-dialog');
+  const petForm = document.getElementById('pet-form');
+
+  function openPetDialog(title, submitLabel, action, values) {
+    document.getElementById('pet-title').textContent = title;
+    document.getElementById('pet-submit').textContent = submitLabel;
+    petForm.action = action;
+    document.getElementById('pet-name').value = values.name;
+    document.getElementById('pet-species').value = values.species;
+    document.getElementById('pet-gender').value = values.gender;
+    document.getElementById('pet-age').value = values.age;
+    petDialog.showModal();
+    document.getElementById('pet-name').focus();
+  }
+
+  document.querySelectorAll('.js-add').forEach(function (button) {
+    button.addEventListener('click', function () {
+      openPetDialog('Add pet', 'Add Pet', "{{ url_for('add_pet') }}",
+        { name: '', species: '', gender: '', age: '' });
+    });
+  });
+
+  document.querySelectorAll('.js-edit').forEach(function (button) {
+    button.addEventListener('click', function () {
+      openPetDialog('Edit pet', 'Save', button.dataset.action, {
+        name: button.dataset.name,
+        species: button.dataset.species,
+        gender: button.dataset.gender,
+        age: button.dataset.age
+      });
+    });
+  });
+
+  document.querySelectorAll('.js-delete').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const count = parseInt(button.dataset.count, 10);
+      const text = document.getElementById('delete-text');
+      const confirmButton = document.getElementById('delete-confirm');
+
+      document.getElementById('delete-form').action = button.dataset.action;
+
+      if (count > 0) {
+        text.textContent = button.dataset.name + ' has ' + count +
+          ' appointment(s) on record, so it cannot be deleted.';
+        confirmButton.style.display = 'none';
+      } else {
+        text.textContent = 'Remove ' + button.dataset.name + ' from your pets? This cannot be undone.';
+        confirmButton.style.display = '';
+      }
+      deleteDialog.showModal();
+    });
+  });
+
+  document.querySelectorAll('.js-close').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.closest('dialog').close();
+    });
+  });
+
+  document.querySelectorAll('dialog').forEach(function (dialog) {
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) {
+        dialog.close();
+      }
+    });
+  });
+</script>
+{% endblock %}

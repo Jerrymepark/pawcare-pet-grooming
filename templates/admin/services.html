@@ -1,0 +1,189 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Services{% endblock %}
+{% block page_title %}Services{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h2 class="page-heading">Services</h2>
+  <button class="btn" type="button" id="open-add" {{ 'disabled' if not categories }}>+ Add Service</button>
+</div>
+
+{% if not categories %}
+  <div class="flash flash-error">
+    Create a category first. Every service must belong to one.
+    <a href="{{ url_for('admin_categories') }}">Go to Categories</a>
+  </div>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-head">
+    <h3>All services</h3>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Available</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in services %}
+        <tr>
+          <td>
+            <strong>{{ s.service_name }}</strong>
+            {% if s.description %}<div class="service-desc">{{ s.description }}</div>{% endif %}
+          </td>
+          <td>{{ s.category_name }}</td>
+          <td class="mono">₱{{ '{:,.2f}'.format(s.price) }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('toggle_service', service_id=s.service_id) }}" class="avail-cell">
+              <label class="switch">
+                <input type="checkbox" {{ 'checked' if s.is_available }} onchange="this.form.submit()">
+                <span class="slider"></span>
+              </label>
+              <span class="avail-label">{{ 'Available' if s.is_available else 'Unavailable' }}</span>
+            </form>
+          </td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="btn btn-small btn-light js-edit"
+                      data-action="{{ url_for('edit_service', service_id=s.service_id) }}"
+                      data-name="{{ s.service_name }}"
+                      data-description="{{ s.description or '' }}"
+                      data-category="{{ s.category_id }}"
+                      data-price="{{ '{:.2f}'.format(s.price) }}">Edit</button>
+              <button type="button" class="btn btn-small btn-danger js-delete"
+                      data-action="{{ url_for('delete_service', service_id=s.service_id) }}"
+                      data-name="{{ s.service_name }}"
+                      data-count="{{ s.appointment_count }}">Delete</button>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="empty" colspan="5">No services yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<dialog id="service-dialog" class="modal">
+  <form method="POST" id="service-form">
+    <h3 id="service-title">Add service</h3>
+
+    <div class="field">
+      <label for="service-name">Service name</label>
+      <input id="service-name" type="text" name="service_name" maxlength="100" required>
+    </div>
+
+    <div class="field">
+      <label for="service-category">Category</label>
+      <select id="service-category" name="category_id" required>
+        <option value="">Select a category</option>
+        {% for c in categories %}
+        <option value="{{ c.category_id }}">{{ c.category_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="service-price">Price (₱)</label>
+      <input id="service-price" type="number" name="price" step="0.01" min="0.01" required>
+    </div>
+
+    <div class="field">
+      <label for="service-description">Description (optional)</label>
+      <textarea id="service-description" name="description" maxlength="500"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Cancel</button>
+      <button type="submit" class="btn" id="service-submit">Add Service</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="delete-dialog" class="modal">
+  <form method="POST" id="delete-form">
+    <h3>Delete service</h3>
+    <p id="delete-text"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-light js-close">Cancel</button>
+      <button type="submit" class="btn btn-danger" id="delete-confirm">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const serviceDialog = document.getElementById('service-dialog');
+  const deleteDialog = document.getElementById('delete-dialog');
+  const serviceForm = document.getElementById('service-form');
+
+  function openServiceDialog(title, submitLabel, action, values) {
+    document.getElementById('service-title').textContent = title;
+    document.getElementById('service-submit').textContent = submitLabel;
+    serviceForm.action = action;
+    document.getElementById('service-name').value = values.name;
+    document.getElementById('service-category').value = values.category;
+    document.getElementById('service-price').value = values.price;
+    document.getElementById('service-description').value = values.description;
+    serviceDialog.showModal();
+    document.getElementById('service-name').focus();
+  }
+
+  document.getElementById('open-add').addEventListener('click', function () {
+    openServiceDialog('Add service', 'Add Service', "{{ url_for('add_service') }}",
+      { name: '', category: '', price: '', description: '' });
+  });
+
+  document.querySelectorAll('.js-edit').forEach(function (button) {
+    button.addEventListener('click', function () {
+      openServiceDialog('Edit service', 'Save', button.dataset.action, {
+        name: button.dataset.name,
+        category: button.dataset.category,
+        price: button.dataset.price,
+        description: button.dataset.description
+      });
+    });
+  });
+
+  document.querySelectorAll('.js-delete').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const count = parseInt(button.dataset.count, 10);
+      const text = document.getElementById('delete-text');
+      const confirmButton = document.getElementById('delete-confirm');
+
+      document.getElementById('delete-form').action = button.dataset.action;
+
+      if (count > 0) {
+        text.textContent = '"' + button.dataset.name + '" has ' + count +
+          ' appointment(s) on record, so it cannot be deleted. Turn it off with the Available switch instead.';
+        confirmButton.style.display = 'none';
+      } else {
+        text.textContent = 'Delete "' + button.dataset.name + '"? This cannot be undone.';
+        confirmButton.style.display = '';
+      }
+      deleteDialog.showModal();
+    });
+  });
+
+  document.querySelectorAll('.js-close').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.closest('dialog').close();
+    });
+  });
+
+  document.querySelectorAll('dialog').forEach(function (dialog) {
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) {
+        dialog.close();
+      }
+    });
+  });
+</script>
+{% endblock %}

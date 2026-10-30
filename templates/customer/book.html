@@ -1,0 +1,120 @@
+{% extends "customer/base.html" %}
+{% from "admin/icons.html" import icon %}
+
+{% block title %}Book Appointment{% endblock %}
+{% block page_icon %}{{ icon('calendar', 16) }}{% endblock %}
+{% block page_title %}Book Appointment{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+  <h2 class="page-heading">Book an appointment</h2>
+  <p>Choose your pet, a service, and a time that suits you. Appointments run on the hour, Monday to Saturday.</p>
+</div>
+
+{% if not pets %}
+  <section class="empty-state">
+    <p>You need to add a pet before you can book.</p>
+    <a class="btn" href="{{ url_for('customer_pets') }}">Add a pet</a>
+  </section>
+{% elif not groups %}
+  <section class="empty-state">
+    <p>No services are available for booking right now. Please check back soon.</p>
+  </section>
+{% else %}
+<section class="panel form-card">
+  <form class="panel-body" method="POST" action="{{ url_for('review_booking') }}">
+
+    <div class="field">
+      <label class="field-label" for="book-pet">Pet</label>
+      <select id="book-pet" name="pet_id" required>
+        <option value="">Select your pet</option>
+        {% for p in pets %}
+        <option value="{{ p.pet_id }}" {{ 'selected' if pets|length == 1 }}>{{ p.pet_name }} ({{ p.species }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="book-service">Service</label>
+      <select id="book-service" name="service_id" required>
+        <option value="">Select a service</option>
+        {% for category, services in groups.items() %}
+        <optgroup label="{{ category }}">
+          {% for s in services %}
+          <option value="{{ s.service_id }}" {{ 'selected' if s.service_id|string == selected_service }}>{{ s.service_name }} — ₱{{ '{:,.2f}'.format(s.price) }}</option>
+          {% endfor %}
+        </optgroup>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="book-date">Date</label>
+      <input id="book-date" type="date" name="date" min="{{ min_date }}" max="{{ max_date }}" required>
+    </div>
+
+    <div class="field">
+      <span class="field-label">Time</span>
+      <div id="slots" class="slots"></div>
+      <p class="form-note" id="slots-hint">Pick a date to see available times.</p>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" type="submit">Review booking</button>
+    </div>
+  </form>
+</section>
+
+<script>
+  const dateInput = document.getElementById('book-date');
+  const slotsBox = document.getElementById('slots');
+  const slotsHint = document.getElementById('slots-hint');
+
+  function showMessage(text) {
+    slotsBox.innerHTML = '';
+    slotsHint.textContent = text;
+  }
+
+  dateInput.addEventListener('change', function () {
+    if (!dateInput.value) {
+      showMessage('Pick a date to see available times.');
+      return;
+    }
+    showMessage('Loading times...');
+
+    fetch("{{ url_for('booking_slots') }}?date=" + encodeURIComponent(dateInput.value))
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        slotsBox.innerHTML = '';
+        if (data.error) {
+          slotsHint.textContent = data.error;
+          return;
+        }
+        slotsHint.textContent = 'Crossed-out times are already booked.';
+
+        data.slots.forEach(function (slot) {
+          const label = document.createElement('label');
+          label.className = 'slot' + (slot.available ? '' : ' slot-taken');
+
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = 'slot';
+          input.value = slot.value;
+          input.required = true;
+          input.disabled = !slot.available;
+
+          const text = document.createElement('span');
+          text.textContent = slot.label;
+
+          label.appendChild(input);
+          label.appendChild(text);
+          slotsBox.appendChild(label);
+        });
+      })
+      .catch(function () {
+        showMessage('Could not load times. Please try again.');
+      });
+  });
+</script>
+{% endif %}
+{% endblock %}
